@@ -86,7 +86,7 @@ class NaiveBayes:
 
         return np.array(predictions)
 
-    
+    # ... (other methods and __init__ go here)
 
     def getParams(self):
         priors = {str(c): self.class_priors[c] for c in self.classes}
@@ -240,14 +240,14 @@ def net_f1score(predictions, true_labels):
         rec = recall(predictions, true_labels, label)
 
         if prec + rec == 0:
-            return 0.0  
+            return 0.0  # Avoid division by zero
         return 2 * (prec * rec) / (prec + rec)
 
 
 
 
         """End of your code."""
-        
+        #return f1
     
 
     f1s = []

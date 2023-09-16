@@ -7,7 +7,7 @@ import pickle as pkl
 
 class NaiveBayes:
 
-    def __init__(self, smoothing_alpha=0.000000001):
+    def __init__(self, smoothing_alpha=0.001):
         self.smoothing_alpha = smoothing_alpha
 
     def fit(self, X, y):
@@ -30,7 +30,7 @@ class NaiveBayes:
                     self.distributions[c].append(("gaussian", mean, variance))
                 elif feature_idx in [2, 3]:
                     # Fit Bernoulli distribution for X3 and X4
-                    p = (np.sum(feature_data) + self.smoothing_alpha) / (len(class_data) +  self.smoothing_alpha)
+                    p = (np.sum(feature_data) + self.smoothing_alpha) / (len(class_data) + 2 * self.smoothing_alpha)
                     self.distributions[c].append(("bernoulli", p))
                 elif feature_idx in [4, 5]:
                     # Fit Laplace distribution for X5 and X6
@@ -45,7 +45,7 @@ class NaiveBayes:
                     # Fit Multinomial distribution for X9 and X10
                     k = int(np.max(feature_data)) + 1
                     counts = np.bincount(feature_data.astype(int), minlength=k) + self.smoothing_alpha
-                    probabilities = counts / (len(feature_data))
+                    probabilities = counts / (len(feature_data) + k * self.smoothing_alpha)
                     self.distributions[c].append(("multinomial", probabilities))
 
     def predict(self, X):
@@ -86,8 +86,7 @@ class NaiveBayes:
 
         return np.array(predictions)
 
-    
-
+    # ... (other methods and __init__ go here)
     def getParams(self):
         priors = {str(c): self.class_priors[c] for c in self.classes}
         gaussian = {str(c): [] for c in self.classes}
@@ -97,30 +96,36 @@ class NaiveBayes:
         multinomial = {str(c): [] for c in self.classes}
 
         for c in self.classes:
-        
-            
+            gaussian_means = []
+            gaussian_variances = []
+            laplace_means = []
+            laplace_variances = []
+
             for feature_idx in range(self.features):
                 distribution = self.distributions[c][feature_idx]
                 
                 if distribution[0] == "gaussian":
                     _, mean, variance = distribution
-                    gaussian[str(c)].extend([mean,variance])
+                    gaussian_means.append(mean)
+                    gaussian_variances.append(variance)
 
                 elif distribution[0] == "bernoulli":
                     _, p = distribution
                     bernoulli[str(c)].append(p)
                 elif distribution[0] == "laplace":
                     _, mu, b = distribution
-                    laplace[str(c)].extend([mu, b])
+                    laplace_means.append(mu)
+                    laplace_variances.append(variance)
                 elif distribution[0] == "exponential":
                     _, rate = distribution
                     exponential[str(c)].append(rate)
                 elif distribution[0] == "multinomial":
                     _, probabilities = distribution
                     multinomial[str(c)].append(probabilities)
-            
+            gaussian[str(c)].extend(gaussian_means + gaussian_variances)
+            laplace[str(c)].extend(laplace_means + laplace_variances)
         return priors, gaussian, bernoulli, laplace, exponential, multinomial
-        
+    
        
 
 
@@ -240,14 +245,14 @@ def net_f1score(predictions, true_labels):
         rec = recall(predictions, true_labels, label)
 
         if prec + rec == 0:
-            return 0.0  
+            return 0.0  # Avoid division by zero
         return 2 * (prec * rec) / (prec + rec)
 
 
 
 
         """End of your code."""
-        
+        #return f1
     
 
     f1s = []
